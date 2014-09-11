@@ -9,9 +9,9 @@ import sys
 import sqlite3
 cx = sqlite3.connect("/Users/thunisoft/Desktop/hello.db")
 cu = cx.cursor()
-cu.execute("drop table cases")
+cu.execute("drop table if exists cases ")
 cu.execute("create table cases (id integer primary key AutoIncrement,c_name varchar(100),c_desc varchar(10240),\
-				c_href varchar(100) ,c_thumb_url varchar(100) ,c_video_url varchar(200))")
+				c_href varchar(100) ,c_thumb_url varchar(100) ,c_video_url varchar(200),c_timesent varchar(100))")
 
 #conn = MySQLdb.connect(host='114.255.140.110', user='root', passwd='resroot', db='db_zgfyw', port=3306, charset='utf8')
 #cur = conn.cursor()
@@ -45,6 +45,8 @@ for page in pages:
 	for x in names:
 		ahref = x.find('a')
 		href= ahref['href']
+		alt = ahref.contents[0]['alt']
+		src = ahref.contents[0]['src']
 		m3u8url = ""
 
 
@@ -56,6 +58,16 @@ for page in pages:
 
 		desc = soup_inner.find('div', {'class' : 'video_info'})
 		desc = desc.get_text()
+
+		title = soup_inner.find('div', {'class' : 'video_title'})
+		title_text = title.h1.get_text()
+		
+		timesent = title.p.get_text()
+		timep = re.compile(r'\d{2,4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}')
+		timp_ary = timep.findall(timesent)
+		for times in timp_ary:
+			if times != "":
+				timesent = times
 
 		iframe = soup_inner.find('iframe')
 		videourl = iframe['src']
@@ -75,10 +87,8 @@ for page in pages:
 		#print desc
 
 
-		alt = ahref.contents[0]['alt']
-		src = ahref.contents[0]['src']
-		cu.execute("insert into cases (c_name,c_href,c_thumb_url,c_desc,c_video_url) values ('%s','%s','%s','%s','%s')" % 
-			(alt,href,src,desc,m3u8url))
+		cu.execute("insert into cases (c_name,c_href,c_thumb_url,c_desc,c_video_url,c_timesent) values ('%s','%s','%s','%s','%s','%s')" % 
+			(title_text,href,src,desc,m3u8url,timesent))
 		cx.commit()
 
 	con2.close()
